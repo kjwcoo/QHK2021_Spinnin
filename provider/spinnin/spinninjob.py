@@ -12,6 +12,8 @@ from qiskit.providers import BaseJob
 from qiskit.qobj import validate_qobj_against_schema
 from qiskit.result import Result
 
+import driver
+
 class SpinninJob(BaseJob):
     def __init__(self, backend, qobj):
         super().__init__(backend, 0)
@@ -38,7 +40,7 @@ class SpinninJob(BaseJob):
         # Pass a trigger to the local server
         with open( 'status.txt', 'a' ) as file:
             file.write( 'start: '+self._creation_date+'\n')
-        exec(open("driver.py").read())
+        driver.run_example( 'dev8189', )
         
     def result(self):
         

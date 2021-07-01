@@ -22,6 +22,26 @@ with open( 'local_exp.txt', 'r' ) as file:
     result = json.loads('[' + file.read() + ']')
 print( result )
 
+# This is only used if this example is ran without the awg_sourcefile
+# parameter: To ensure that we have a .seqc source file to use in this example,
+# we write this to disk and then compile this file.
+SOURCE = textwrap.dedent(
+    """// Define an integer constant
+    const N = 4096;
+    // Create two Gaussian pulses with length N points,
+    // amplitude +1.0 (-1.0), center at N/2, and a width of N/8
+    wave gauss_pos = 1.0*gauss(2*N, N, N/8);
+    wave gauss_neg = -1.0*gauss(N, N/2, N/8);
+    // Continuous playback.
+    while (true) {
+      // Play pulse on AWG channel 1
+      // playWave(gauss_pos);
+      // Wait until waveform playback has ended
+      // waitWave();
+      // Play pulses simultaneously on both AWG channels
+      playWave(gauss_pos, gauss_neg);
+    }"""
+)
 def run_example(device_id, awg_sourcefile=None):
     """
     Connect to a Zurich Instruments HDAWG, compile, upload and run an AWG
@@ -145,26 +165,5 @@ def run_example(device_id, awg_sourcefile=None):
     # using an infinite loop (e.g., while (true)) in the sequencer program.
     daq.setInt(f"/{device}/awgs/0/single", 1)
     daq.setInt(f"/{device}/awgs/0/enable", 1)
-
-# This is only used if this example is ran without the awg_sourcefile
-# parameter: To ensure that we have a .seqc source file to use in this example,
-# we write this to disk and then compile this file.
-SOURCE = textwrap.dedent(
-    """// Define an integer constant
-    const N = 4096;
-    // Create two Gaussian pulses with length N points,
-    // amplitude +1.0 (-1.0), center at N/2, and a width of N/8
-    wave gauss_pos = 1.0*gauss(2*N, N, N/8);
-    wave gauss_neg = -1.0*gauss(N, N/2, N/8);
-    // Continuous playback.
-    while (true) {
-      // Play pulse on AWG channel 1
-      // playWave(gauss_pos);
-      // Wait until waveform playback has ended
-      // waitWave();
-      // Play pulses simultaneously on both AWG channels
-      playWave(gauss_pos, gauss_neg);
-    }"""
-)
 
 result = run_example( 'dev8189', )
