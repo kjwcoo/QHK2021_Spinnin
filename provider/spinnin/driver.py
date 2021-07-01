@@ -14,67 +14,51 @@ import zhinst.utils
 
 import json
 
-# Read the instruction set from Qobj
-with open( 'local_config.txt', 'r' ) as file:
-    num_q = int( file.read() )
+def generate_source_file( ):
+    # Read the instruction set from Qobj
+    with open( 'local_exp.txt', 'r' ) as file:
+        result = json.loads('[' + file.read() + ']')
+    print( result )
+    playCode = "wave complete_cycle = join( sudden_start, ramp_start"
+    newCode = ""
+    for val, dict in enumerate( result[ 0 ] ):
+        print( val )
+        if dict[ 'name' ] == 'x':
+            gateCode = "wave x_" + str( val ) + " = A_base + A * sine( N, A, 0, nPeriod );\n" 
+            playCode = playCode + ", x_" + str( val )
+        elif dict[ 'name' ] == 'y':
+            gateCode = "wave y_" + str( val )+ " = A_base + A * cosine( N, A, 0, nPeriod );\n" 
+            playCode = playCode + ", y_" + str( val )
+        elif dict[ 'name' ] == 'id':
+            gateCode = "wave id_" + str( val )+ " = A_base + 0.0 * sine( N, 0.0, 0, nPeriod );\n" 
+            playCode = playCode + ", id_" + str( val )
+        else:
+            break
+        newCode = newCode + gateCode
+    playCode = playCode + ", ramp_end, sudden_end );\n"
+    newCode = newCode + playCode + "playWave( complete_cycle );"
+    code = """
+              const N_sudden = 100;
+              const A_sudden = 0.3;
+              const N_ramp = 1000;
+              const A_ramp = 0.6;
+              const N = 1000;
+              const A_base = 0.6;
+              const A = 0.2;
+              const nPeriod = 30;
+              wave sudden_start = ramp( N_sudden, 0.0, A_sudden );
+              wave ramp_start = ramp( N_ramp, A_sudden, A_ramp );
+              wave ramp_end = ramp( N_ramp, A_ramp, A_sudden );
+              wave sudden_end = ramp( N_sudden, A_sudden, 0.0 );
+              {str0}
+              """.format( str0 = newCode )
+    print( code )
+    SOURCE = textwrap.dedent(
+       code
+    )
+    return SOURCE
 
-with open( 'local_exp.txt', 'r' ) as file:
-    result = json.loads('[' + file.read() + ']')
-print( result )
-
-# This is only used if this example is ran without the awg_sourcefile
-# parameter: To ensure that we have a .seqc source file to use in this example,
-# we write this to disk and then compile this file.
-SOURCE = textwrap.dedent(
-    """// Define an integer constant
-    const N = 4096;
-    // Create two Gaussian pulses with length N points,
-    // amplitude +1.0 (-1.0), center at N/2, and a width of N/8
-    wave gauss_pos = 1.0*gauss(2*N, N, N/8);
-    wave gauss_neg = -1.0*gauss(N, N/2, N/8);
-    // Continuous playback.
-    while (true) {
-      // Play pulse on AWG channel 1
-      // playWave(gauss_pos);
-      // Wait until waveform playback has ended
-      // waitWave();
-      // Play pulses simultaneously on both AWG channels
-      playWave(gauss_pos, gauss_neg);
-    }"""
-)
 def run_example(device_id, awg_sourcefile=None):
-    """
-    Connect to a Zurich Instruments HDAWG, compile, upload and run an AWG
-    sequence program.
-
-    Requirements:
-
-      An HDAWG Instrument.
-
-    Arguments:
-
-      device_id (str): The ID of the device to run the example with. For
-        example, `dev8006` or `hdawg-dev8006`.
-
-      awg_sourcefile (str, optional): Specify an AWG sequencer file to compile
-        and upload. This file must exist in the AWG source sub-folder of your
-        LabOne data directory (this location is provided by the
-        directory parameter). The source folder must not be included;
-        specify the filename only with extension.
-
-    Raises:
-
-      Exception: AWG functionality is not available.
-
-      RuntimeError: If the device is not "discoverable" from the API.
-
-    See the "LabOne Programming Manual" for further help, available:
-      - On Windows via the Start-Menu:
-        Programs -> Zurich Instruments -> Documentation
-      - On Linux in the LabOne .tar.gz archive in the "Documentation"
-        sub-folder.
-    """
-
     # Settings
     apilevel_example = 6  # The API level supported by this example.
     err_msg = "This example can only be ran on either an HDAWG with the AWG option enabled."
@@ -116,6 +100,7 @@ def run_example(device_id, awg_sourcefile=None):
     if awg_sourcefile is None:
         # Write an AWG source file to disk that we can compile in this example.
         awg_sourcefile = "ziPython_example_awg_sourcefile.seqc"
+        SOURCE = generate_source_file()
         with open(os.path.join(src_dir, awg_sourcefile), "w") as f:
             f.write(SOURCE)
     else:
