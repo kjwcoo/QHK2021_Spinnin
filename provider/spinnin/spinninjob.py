@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import json
 from collections import Counter
 from datetime import datetime, timezone
@@ -74,10 +68,6 @@ class SpinninJob(BaseJob):
     
     def status(self):
         pass
-
-
-# In[ ]:
-
 
 
 

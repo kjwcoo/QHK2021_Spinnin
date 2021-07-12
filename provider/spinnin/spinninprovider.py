@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 from collections import OrderedDict
 
 from qiskit.providers import BaseProvider

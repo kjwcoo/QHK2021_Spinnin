@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 from qiskit.providers import BaseBackend
 from qiskit.providers.models import BackendConfiguration
 from spinninjob import SpinninJob
